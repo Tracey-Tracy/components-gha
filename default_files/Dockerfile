@@ -2,6 +2,8 @@ ARG RASA_VERSION
 # Extend the official Rasa image
 FROM rasa/rasa:${RASA_VERSION}-full
 
+WORKDIR /app
+
 # Change back to root user to install dependencies
 USER root
 
