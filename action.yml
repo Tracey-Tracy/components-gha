@@ -1,9 +1,9 @@
-name: 'Build Action Server image'
-description: 'Build a Docker image with custom actions for Rasa Action Server'
+name: 'Build Rasa Server image'
+description: 'Build a Docker image with custom components for Rasa Server'
 inputs:
-  actions_directory:
-    description: "Path to the directory with actions."
-    default: "${{ github.workspace }}/actions"
+  components_directory:
+    description: "Path to the directory with components."
+    default: "${{ github.workspace }}/components"
     required: false
   requirements_file:
     description: "Path to the requirements.txt file."
@@ -20,7 +20,7 @@ inputs:
     required: true
   docker_image_name:
     description: "Docker image name."
-    default: "action_server"
+    default: "components_server"
     required: false
   docker_image_tag:
     description: "Docker image tag."
@@ -33,8 +33,8 @@ inputs:
   dockerfile:
     description: "Path to a custom Dockerfile."
     required: false
-  rasa_sdk_version:
-    description: "Version of the Rasa SDK which should be used to build the image."
+  rasa_version:
+    description: "Version of the Rasa which should be used to build the image."
     default: "latest"
     required: false
   docker_build_args:
@@ -79,8 +79,8 @@ runs:
         mkdir -p ${{ github.workspace }}/tmp
         if [[ "${{ inputs.requirements_file }}" == "" ]]; then
           # Check if requirements file exists
-          if [[ -d ${{ inputs.actions_directory }}/requirements.txt ]]; then
-            cp -a ${{ inputs.actions_directory }}/requirements.txt ${{ github.workspace }}/tmp/requirements.txt
+          if [[ -d ${{ inputs.components_directoryrequirements.txt ]]; then
+            cp -a ${{ inputs.components_directory }}/requirements.txt ${{ github.workspace }}/tmp/requirements.txt
           else
             # Copy default files into the tmp directory
             cp -a ${{ github.action_path }}/default_files/requirements.txt ${{ github.workspace }}/tmp/requirements.txt
@@ -89,28 +89,28 @@ runs:
           cp -a  ${{ inputs.requirements_file }} ${{ github.workspace }}/tmp/requirements.txt || echo "::error::The requirements file (${{ inputs.requirements_file }}) doesn't exist."
         fi
 
-        # Copy the actions directory into the tmp directory
-        mkdir -p ${{ github.workspace }}/tmp/actions
-        if [[ ! -d ${{ inputs.actions_directory }} ]]; then
-          echo "::error::The actions directory (${{ inputs.actions_directory }}) doesn't exist." && exit 1
+        # Copy the components directory into the tmp directory
+        mkdir -p ${{ github.workspace }}/tmp/components
+        if [[ ! -d ${{ inputs.components_directory }} ]]; then
+          echo "::error::The components directory (${{ inputs.components_directory }}) doesn't exist." && exit 1
         fi
-        cp -a ${{ inputs.actions_directory }}/* ${{ github.workspace }}/tmp/actions/
+        cp -a ${{ inputs.components_directory }}/* ${{ github.workspace }}/tmp/components/
 
-    - name: Set the Rasa SDK version
+    - name: Set the Rasa version
       shell: bash
       run: |
-        DOCKERHUB_TAGS_URL="https://registry.hub.docker.com/v2/repositories/rasa/rasa-sdk/tags?page_size=10000"
+        DOCKERHUB_TAGS_URL="https://registry.hub.docker.com/v2/repositories/rasa/rasa/tags?page_size=10000"
         # Get the latest version
-        if [[ "${{ inputs.rasa_sdk_version }}" == "latest" ]]; then
-          LATEST_RASA_SDK_VERSION=$(curl -s ${DOCKERHUB_TAGS_URL} | jq -r '.results[].name' | grep -vE 'refs|aws|latest' | sort -Vr | head -n1)
-          echo "RASA_SDK_VERSION=${LATEST_RASA_SDK_VERSION}" >> $GITHUB_ENV
+        if [[ "${{ inputs.rasa_version }}" == "latest" ]]; then
+          LATEST_RASA_VERSION=$(curl -s ${DOCKERHUB_TAGS_URL} | jq -r '.results[].name' | grep -vE 'refs|aws|latest' | sort -Vr | head -n1)
+          echo "RASA_VERSION=${LATEST_RASA_VERSION}" >> $GITHUB_ENV
         else
-          # Validate Rasa SDK version
-          CHECK_VERSION=$(curl --silent ${DOCKERHUB_TAGS_URL} | jq -r '.results[] | select(.name=="${{ inputs.rasa_sdk_version }}") | .name')
-          if [[ "$CHECK_VERSION" != "${{ inputs.rasa_sdk_version }}" ]]; then
-            echo "::error::Rasa SDK in ${{ inputs.rasa_sdk_version }} version doesn't exist. Check if the given Rasa SDK version is valid, https://hub.docker.com/r/rasa/rasa-sdk/tags" && exit 1
+          # Validate Rasa version
+          CHECK_VERSION=$(curl --silent ${DOCKERHUB_TAGS_URL} | jq -r '.results[] | select(.name=="${{ inputs.rasa_version }}") | .name')
+          if [[ "$CHECK_VERSION" != "${{ inputs.rasa_version }}" ]]; then
+            echo "::error::Rasa in ${{ inputs.rasa_version }} version doesn't exist. Check if the given Rasa version is valid, https://hub.docker.com/r/rasa/rasa/tags" && exit 1
           fi
-          echo "RASA_SDK_VERSION=${{ inputs.rasa_sdk_version }}" >> $GITHUB_ENV
+          echo "RASA_VERSION=${{ inputs.rasa_version }}" >> $GITHUB_ENV
         fi
 
     - name: Docker login
@@ -125,13 +125,13 @@ runs:
 
     - name: Docker build
       run: |-
-        echo "Building a docker image using Rasa SDK in ${{ env.RASA_SDK_VERSION }} version."
+        echo "Building a docker image using Rasa in ${{ env.RASA_VERSION }} version."
         echo "  Dockerfile arguments:"
         echo "    GITHUB_SHA: $GITHUB_SHA"
         echo "    GITHUB_REF: $GITHUB_REF"
         echo "    DOCKER_IMAGE_NAME: ${{ inputs.docker_image_name }}"
         echo "    DOCKER_IMAGE_TAG: ${{ inputs.docker_image_tag }}"
-        echo "    RASA_SDK_VERSION: ${{ env.RASA_SDK_VERSION }}"
+        echo "    RASA_VERSION: ${{ env.RASA_VERSION }}"
         echo ""
         echo "  Docker build extra arguments: ${{ inputs.docker_build_args}}"
         echo ""
@@ -140,7 +140,7 @@ runs:
           --build-arg GITHUB_SHA="$GITHUB_SHA" \
           --build-arg GITHUB_REF="$GITHUB_REF" \
           --build-arg DOCKER_IMAGE_NAME="${{ inputs.docker_image_name }}" \
-          --build-arg RASA_SDK_VERSION="${{ env.RASA_SDK_VERSION }}" \
+          --build-arg RASA_VERSION="${{ env.RASA_VERSION }}" \
           --build-arg DOCKER_IMAGE_TAG="${{ inputs.docker_image_tag }}" ${{ inputs.docker_build_args }}\
           -f ${{ env.DOCKERFILE }} ${{ github.workspace }}
       shell: bash

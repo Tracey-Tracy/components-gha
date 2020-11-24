@@ -1,9 +1,6 @@
-# Rasa GitHub Action
+# Rasa GitHub Custom Components
 
-You can find more information about Rasa actions in [the Rasa Open Source docs](https://rasa.com/docs/rasa/core/actions/).
-You can find more information about the action server in the [action server docs](https://rasa.com/docs/action-server).
-
-_You don't need to have a Dockerfile for your action server to build a Docker image, the GH action helps you to build a Docker image in the easiest way possible._
+_You don't need to have a Dockerfile for your custom component server to build a Docker image, the GH action helps you to build a Docker image in the easiest way possible._
 
 ## Input arguments
 
@@ -14,9 +11,9 @@ jobs:
   my_first_job:
     steps:
       - name: My first step
-        uses: RasaHQ/action-server-gha@master
+        uses: fabricetouzani/components-gha@master
         with:
-          actions_directory: my_directory
+          components_directory: my_directory
           requirements_file: my_file
           docker_registry: my_registry
 ```
@@ -25,16 +22,16 @@ Here are all the parameters you can change via the inputs available through [`wi
 
 |           Input            |                                                           Description                                                           |        Default         |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| `actions_directory`        | Path to the directory with actions                                                                                              | `actions`              |
+| `components_directory`        | Path to the directory with components                                                                                              | `actions`              |
 | `requirements_file`        | Path to the requirements.txt file                                                                                               | `none`                 |
 | `docker_registry`          | Name of the Docker registry that the Docker image is published to                                                               | `docker.io`            |
 | `docker_registry_login`    | Login name for the Docker registry                                                                                              | `none`                 |
 | `docker_registry_password` | Password for the Docker registry                                                                                                | `none`                 |
-| `docker_image_name`        | Docker image name                                                                                                               | `action_server`        |
+| `docker_image_name`        | Docker image name                                                                                                               | `components_server`        |
 | `docker_image_tag`         | Docker image tag                                                                                                                | `${{ github.run_id }}` |
 | `docker_registry_push`     | Push a Docker image to the registry. If `false` the user can add manual extra steps in their workflow which use the built image | `true`                 |
 | `dockerfile`               | Path to a custom Dockerfile                                                                                                     | `none`                 |
-| `rasa_sdk_version`         | Version of the Rasa SDK which should be used to build the image                                                                 | `latest`               |
+| `rasa_version`         | Version of Rasa which should be used to build the image                                                                 | `latest`               |
 | `docker_build_args`        | List of build-time variables                                                                                                    | `none`                 |
 
 ## Outputs
@@ -47,7 +44,7 @@ The list of available output variables:
 | `docker_image_tag`       | Tag of the image, e.g., `v1.0`                                                                                                |
 | `docker_image_full_name` | Docker image name (contains an address to the registry, image name, and tag), e.g., `docker.io/my_account/my_image_name:v1.0` |
 
-_GitHub Actions that run later in a workflow can use the output parameters returned by the Rasa GitHub Action, see [the example](examples/upgrade-deploy-rasa-x.yml) of output parameters usage._
+_GitHub Actions that run later in a workflow can use the output parameters returned by the Component GitHub Action, see [the example](examples/upgrade-deploy-rasa-x.yml) of output parameters usage._
 
 ## Example Usage
 
@@ -59,10 +56,10 @@ jobs:
         # ...
         steps:
             # ...
-            - name: Build an action server
-              uses: RasaHQ/action-server-gha@master
+            - name: Build a Rasa server with custom components
+              uses: fabricetouzani/components-gha@master
               with:
-                docker_image_name: 'rasahq/action-server-example'
+                docker_image_name: 'fabricetouzani/components'
                 # More details on how to use GitHub secrets:
                 # https://docs.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets
                 docker_registry_login: ${{ secrets.DOCKER_HUB_LOGIN }}
@@ -82,10 +79,10 @@ jobs:
         # ...
         steps:
             # ...
-            - name: Build an action server
-              uses: RasaHQ/action-server-gha@master
+            - name: Build a Rasa server with custom components
+              uses: fabricetouzani/components-gha@master
               with:
-                docker_image_name: 'rasahq/action-server-example'
+                docker_image_name: 'fabricetouzani/components'
                 # More details on how to use GitHub secrets:
                 # https://docs.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets
                 docker_registry_login: ${{ secrets.DOCKER_HUB_LOGIN }}
@@ -112,16 +109,16 @@ on:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
-    name: Build Rasa Action Server image and upgrade Rasa X deployment
+    name: Build Rasa Server image with custom components and upgrade Rasa X deployment
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - id: action_server
-      name: Build an action server with custom actions
-      uses: RasaHQ/action-server-gha@master
+    - id: components_server
+      name: Build a Rasa server with custom components
+      uses: fabricetouzani/components-gha@master
       with:
-        docker_image_name: 'rasahq/action-server-example'
+        docker_image_name: 'fabricetouzani/components'
         docker_registry_login: ${{ secrets.DOCKER_HUB_LOGIN }}
         docker_registry_password: ${{ secrets.DOCKER_HUB_PASSWORD }}
         docker_image_tag: ${{ github.sha }}
@@ -130,10 +127,10 @@ jobs:
       run: |
         # More information: https://rasa.com/docs/rasa-x/installation-and-setup/install/helm-chart/
 
-        # Upgrade the helm release using output parameters from the `action_server` step
+        # Upgrade the helm release using output parameters from the `components_server` step
         helm upgrade --install --reuse-values \
-          --set app.name=${{ steps.action_server.outputs.docker_image_name }} \
-          --set app.tag=${{ steps.action_server.outputs.docker_image_tag }} rasa rasa-x/rasa-x
+          --set app.name=${{ steps.components_server.outputs.docker_image_name }} \
+          --set app.tag=${{ steps.components_server.outputs.docker_image_tag }} rasa rasa-x/rasa-x
 ```
 
 ## Configuration
@@ -144,7 +141,7 @@ This section describes how to customize a Docker image build by using the GitHub
 
 It's possible to use a custom Dockerfile for an image build. An example below shows how to do this.
 
-_Notice: the Rasa SDK uses Python 3.7_
+_Notice: Rasa uses Python 3.7_
 
 ```yaml
 jobs:
@@ -152,10 +149,10 @@ jobs:
         # ...
         steps:
             # ...
-            - name: Build an action server
-              uses: RasaHQ/action-server-gha
+            - name: Build a Rasa server with custom components
+              uses: fabricetouzani/action-server-gha
               with:
-                actions_directory: 'examples/actions'
+                actions_directory: 'examples/components'
                 # Push a Docker image into GitHub Container Registry
                 docker_registry: 'docker.pkg.github.com'
                 docker_image_name: 'github-account/repository-name/image-name'
@@ -177,7 +174,7 @@ Below you can find a list of build arguments that you can use for your Dockerfil
 - `GITHUB_REF` - The branch or tag ref that triggered the workflow. For example, `refs/heads/feature-branch-1`.
 - `DOCKER_IMAGE_NAME` - A Docker image name, the name contains a registry address and the image name. Fox example, `docker.io/myaccount/myimage`.
 - `DOCKER_IMAGE_TAG` - A tag of the image. For example, `v1.0.0`.
-- `RASA_SDK_VERSION` - Version of the Rasa SDK, For example, `latest`. The full list of available versions can be found [here](https://github.com/RasaHQ/rasa-sdk/releases).
+- `RASA_VERSION` - Version of Rasa, For example, `latest`. The full list of available versions can be found [here](https://github.com/RasaHQ/rasa/releases).
 
 In addition to default build arguments, it's possible to add custom arguments by using the `docker_build_args` input argument. For example, `docker_build_args: "--build-arg MY_ARG_1=1 --build-arg MY_ARG_2=2"`.
 
