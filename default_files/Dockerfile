@@ -17,8 +17,5 @@ python -m spacy download nl_core_news_lg
 # Copy components folder to working directory
 COPY ./tmp/components /app/components
 
-RUN chgrp -R 0 /.config && chmod -R g=u /.config
 # By best practices, don't run the code with root user
 USER 1001
-
-ENV PYTHONPATH "${PYTHONPATH}:/app"
