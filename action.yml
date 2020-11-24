@@ -79,7 +79,7 @@ runs:
         mkdir -p ${{ github.workspace }}/tmp
         if [[ "${{ inputs.requirements_file }}" == "" ]]; then
           # Check if requirements file exists
-          if [[ -d ${{ inputs.components_directoryrequirements.txt ]]; then
+          if [[ -d ${{ inputs.components_directoryrequirements.txt }}]]; then
             cp -a ${{ inputs.components_directory }}/requirements.txt ${{ github.workspace }}/tmp/requirements.txt
           else
             # Copy default files into the tmp directory
