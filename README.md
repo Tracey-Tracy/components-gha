@@ -22,7 +22,7 @@ Here are all the parameters you can change via the inputs available through [`wi
 
 |           Input            |                                                           Description                                                           |        Default         |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| `components_directory`        | Path to the directory with components                                                                                              | `actions`              |
+| `components_directory`        | Path to the directory with components                                                                                              | `components`              |
 | `requirements_file`        | Path to the requirements.txt file                                                                                               | `none`                 |
 | `docker_registry`          | Name of the Docker registry that the Docker image is published to                                                               | `docker.io`            |
 | `docker_registry_login`    | Login name for the Docker registry                                                                                              | `none`                 |
@@ -152,7 +152,7 @@ jobs:
             - name: Build a Rasa server with custom components
               uses: fabricetouzani/action-server-gha
               with:
-                actions_directory: 'examples/components'
+                components_directory: 'examples/components'
                 # Push a Docker image into GitHub Container Registry
                 docker_registry: 'docker.pkg.github.com'
                 docker_image_name: 'github-account/repository-name/image-name'
@@ -181,11 +181,10 @@ In addition to default build arguments, it's possible to add custom arguments by
 Notice! The requirements file and an action directory are mapped to the following paths.
 
 - `requirements.txt`:`./tmp/requirements.txt`
-- `actions_directory`:`./tmp/actions`
+- `components_directory`:`./tmp/components`
 
 An example of the Dockerfile that is used as a default you can find [here](examples/Dockerfile).
 
 ## Next steps
 
 - [Install Rasa X](https://rasa.com/docs/rasa-x/installation-and-setup/installation-guide/#)
-- [Rasa Actions](https://rasa.com/docs/rasa/core/actions/)
