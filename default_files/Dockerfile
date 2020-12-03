@@ -12,7 +12,7 @@ python -m spacy download nl_core_news_lg
 
 # Copy components folder to working directory
 COPY ./components /app/components
-COPY ./components/rest_connectors.py /opt/venv/lib/python3.7/site-packages/rasa/core/channels/
+COPY ./components/io.py /opt/venv/lib/python3.7/site-packages/rasa/core/channels/
 
 # By best practices, don't run the code with root user
 USER 1001
